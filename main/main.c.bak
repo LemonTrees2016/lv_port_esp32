@@ -19,8 +19,6 @@
 #include "freertos/semphr.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
-#include "esp_log.h"
-#include "mcpwm_control.h"
 
 /* Littlevgl specific */
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
@@ -30,12 +28,6 @@
 #endif
 
 #include "lvgl_helpers.h"
-#include "button_int.h"
-#include "lv_port_indev.h"
-#include "main_page.h"
-#include "motor_page.h"
-
-
 
 #ifndef CONFIG_LV_TFT_DISPLAY_MONOCHROME
     #if defined CONFIG_LV_USE_DEMO_WIDGETS
@@ -56,15 +48,14 @@
  *********************/
 #define TAG "demo"
 #define LV_TICK_PERIOD_MS 1
-extern lv_group_t * group;
-extern int g_Cnt;
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
 static void lv_tick_task(void *arg);
 static void guiTask(void *pvParameter);
 static void create_demo_application(void);
-lv_obj_t *table_view_obj;
+
 /**********************
  *   APPLICATION MAIN
  **********************/
@@ -74,8 +65,6 @@ void app_main() {
      * Otherwise there can be problem such as memory corruption and so on.
      * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
     xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 0, NULL, 1);
-    //app_main_gpio();
-	McPwmCtrl_AppMain();
 }
 
 /* Creates a semaphore to handle concurrent call to lvgl stuff
@@ -134,11 +123,6 @@ static void guiTask(void *pvParameter) {
 #endif
 
     disp_drv.buffer = &disp_buf;
-
-    disp_drv.sw_rotate = 1;
-    disp_drv.rotated = LV_DISP_ROT_180;
-
-    //lv_disp_set_rotation(&disp_drv, LV_DISP_ROT_180);
     lv_disp_drv_register(&disp_drv);
 
     /* Register an input device when enabled on the menuconfig */
@@ -158,8 +142,6 @@ static void guiTask(void *pvParameter) {
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
-
-    lv_port_indev_init();
 
     /* Create the demo application */
     create_demo_application();
@@ -183,143 +165,27 @@ static void guiTask(void *pvParameter) {
     vTaskDelete(NULL);
 }
 
-#if 0
-esp_timer_handle_t test_p_handle = 0;
-lv_obj_t* obj_gauage = 0;
-
-void test_timer_periodic_cb(void *arg) {
-    static uint8_t rotate_ang = 0;
-    //ESP_LOGI("test_timer_periodic_cb", "Enter timer int");
-    if (obj_gauage == 0) {
-        ESP_LOGI("test_timer_periodic_cb", "arg null");
-        return;
-    }
-
-    //ESP_LOGI("test_timer_periodic_cb", "Enter timer int");
-    rotate_ang += 1;
-    rotate_ang %= 120;
-    lv_gauge_set_value((lv_obj_t*)obj_gauage, 0, rotate_ang);
-    lv_event_send_refresh((lv_obj_t*)obj_gauage);
-}
-
-static void time_task(lv_obj_t* obj)
-{
-    //定义一个周期重复运行的定时器结构体
-    esp_timer_create_args_t test_periodic_arg = { 
-            .callback = &test_timer_periodic_cb, //设置回调函数
-            .arg = obj, //不携带参数
-            .name = "TestPeriodicTimer" //定时器名字
-            };
-
-   //开始创建一个重复周期的定时器并且执行
-	esp_err_t err = esp_timer_create(&test_periodic_arg, &test_p_handle);
-	err = esp_timer_start_periodic(test_p_handle, 100 * 3000);
-}
-
-void fill_test()
-{
-    static lv_color_t needle_colors[3];
-    needle_colors[0] = LV_COLOR_RED;
-    needle_colors[1] = LV_COLOR_ORANGE;
-    needle_colors[2] = LV_COLOR_PURPLE;
-/*
-    static lv_style_t gauge_style;
-    lv_style_copy(&gauge_style, &lv_style_pretty_color);
-    gauge_style.line.width = 1;
-  */  
-    lv_obj_t* gaugel = lv_gauge_create(lv_scr_act(), NULL);
-    lv_disp_set_rotation(NULL, 180);
-    obj_gauage = gaugel;
-    ESP_LOGI("test_timer_periodic_cb", "%p", obj_gauage);
-    lv_obj_set_size(gaugel, 128, 128);
-
-    //lv_gauge_set_style(gaugel, LV_GAUGE_STYLE_MAIN, &gauge_style);
-
-    lv_gauge_set_needle_count(gaugel, 1, needle_colors);
-    lv_gauge_set_range(gaugel, 0, 120);
-    lv_gauge_set_value(gaugel, 0, 10);
-
-    //time_task(gaugel);
-    return;
-}
-
-void gauge_test(void)
-{
-    static lv_color_t needle_colors[3];
-    needle_colors[0] = LV_COLOR_RED;
-    needle_colors[1] = LV_COLOR_ORANGE;
-    needle_colors[2] = LV_COLOR_PURPLE;
-/*
-    static lv_style_t gauge_style;
-    lv_style_copy(&gauge_style, &lv_style_pretty_color);
-    gauge_style.line.width = 1;
-  */  
-    lv_obj_t* gaugel = lv_gauge_create(lv_scr_act(), NULL);
-    obj_gauage = gaugel;
-    ESP_LOGI("test_timer_periodic_cb", "%p", obj_gauage);
-    lv_obj_set_size(gaugel, 128, 128);
-
-    //lv_gauge_set_style(gaugel, LV_GAUGE_STYLE_MAIN, &gauge_style);
-
-    lv_gauge_set_needle_count(gaugel, 1, needle_colors);
-    lv_gauge_set_range(gaugel, 0, 120);
-    lv_gauge_set_value(gaugel, 0, 10);
-
-
-    // 设置；
-    lv_obj_t* two = lv_obj_create(NULL, NULL);
-    lv_scr_load(two);
-    lv_scr_load_anim(two, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 5000, true);
-    lv_obj_t* label = lv_label_create(two, NULL);
-    lv_obj_set_size(two, LV_HOR_RES, LV_VER_RES);
-    lv_obj_align(label, two, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_local_bg_color(two, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLUE);
-    lv_label_set_text(label, "TWO");
-    vTaskDelay(pdMS_TO_TICKS(2000));
-
-
-    // 设置；
-    lv_obj_t* three = lv_obj_create(NULL, NULL);
-    lv_scr_load(three);
-    lv_scr_load_anim(two, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 5000, true);
-    lv_obj_t* label2 = lv_label_create(three, NULL);
-    lv_obj_set_size(three, LV_HOR_RES, LV_VER_RES);
-    lv_obj_align(label2, three, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_local_bg_color(three, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GREEN);
-    lv_label_set_text(label2, "three");
-    vTaskDelay(pdMS_TO_TICKS(2000));
-
-    // 设置；
-    lv_obj_t* four = lv_obj_create(NULL, NULL);
-    lv_scr_load(four);
-    lv_scr_load_anim(two, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 5000, true);
-    lv_obj_t* label3 = lv_label_create(four, NULL);
-    lv_obj_set_size(four, LV_HOR_RES, LV_VER_RES);
-    lv_obj_align(label3, four, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_local_bg_color(four, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_RED);
-    lv_label_set_text(label3, "four");
-    lv_scr_load_anim(four, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 5000, true);
-    vTaskDelay(pdMS_TO_TICKS(2000));
-
-
-    //lv_scr_load_anim(gaugel, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 5000, true);
-
-}
-
-#endif
-
 static void create_demo_application(void)
 {
     /* When using a monochrome display we only show "Hello World" centered on the
      * screen */
-    #define CONFIG_LV_TFT_DISPLAY_MONOCHROME;
-    
 #if defined CONFIG_LV_TFT_DISPLAY_MONOCHROME || \
     defined CONFIG_LV_TFT_DISPLAY_CONTROLLER_ST7735S
-    //lv_ex_tileview_1();
-    //table_view();
-    MainPage();
-    //gauge_test();
+
+    /* use a pretty small demo for monochrome displays */
+    /* Get the current screen  */
+    lv_obj_t * scr = lv_disp_get_scr_act(NULL);
+
+    /*Create a Label on the currently active screen*/
+    lv_obj_t * label1 =  lv_label_create(scr, NULL);
+
+    /*Modify the Label's text*/
+    lv_label_set_text(label1, "Hello\nworld");
+
+    /* Align the Label to the center
+     * NULL means align on parent (which is the screen now)
+     * 0, 0 at the end means an x, y offset after alignment*/
+    lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 0, 0);
 #else
     /* Otherwise we show the selected demo */
 

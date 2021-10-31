@@ -1,0 +1,61 @@
+#ifndef BUTTON_INT_H_
+#define BUTTON_INT_H_
+
+
+#define GPIO_INPUT_IO_A     32
+#define GPIO_INPUT_IO_C     33
+#define GPIO_INPUT_PIN_SEL \ 
+	((1ULL<<GPIO_INPUT_IO_A) | \
+	(1ULL<<GPIO_INPUT_IO_C))
+
+
+#define GPIO_INPUT_IO_SWITCH_UP       	21
+#define GPIO_INPUT_IO_SWITCH_DOWN     	19
+#define GPIO_INPUT_IO_SWITCH_LEFT     	22
+#define GPIO_INPUT_IO_SWITCH_RIGHT     	4
+
+#define GPIO_INPUT_IO_SWITCH_OK     	16
+#define GPIO_INPUT_IO_SWITCH_SELECT     27
+
+#define GPIO_INPUT_IO_SWITCH_A       	17
+#define GPIO_INPUT_IO_SWITCH_B     		14
+#define GPIO_INPUT_IO_SWITCH_C     		34
+#define GPIO_INPUT_IO_SWITCH_D     		35
+
+
+#define GPIO_INPUT_IO_ROTATE     		25	
+
+#define GPIO_INPUT_SWITCHS_SEL  ((1ULL<<GPIO_INPUT_IO_SWITCH_UP) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_DOWN) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_LEFT) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_RIGHT) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_SELECT) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_A) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_B) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_C) | \
+								 (1ULL<<GPIO_INPUT_IO_SWITCH_C) | \
+								 (1ULL<<GPIO_INPUT_IO_ROTATE) | \
+								 GPIO_INPUT_PIN_SEL)
+
+
+
+
+#define GPIO_INPUT_IO_SWITCH     25
+#define GPIO_INPUT_IO_SWITCH1     19
+#define GPIO_INPUT_IO_SWITCH2     21
+#define GPIO_INPUT_IO_SWITCH3     22
+
+#define GPIO_INPUT_SWITCH_SEL  ((1ULL<<GPIO_INPUT_IO_SWITCH) | \
+	(1ULL<<GPIO_INPUT_IO_SWITCH1) | \
+	(1ULL<<GPIO_INPUT_IO_SWITCH2) | \
+	(1ULL<<GPIO_INPUT_IO_SWITCH3))
+
+
+
+#define ESP_INTR_FLAG_DEFAULT 0
+
+
+
+void app_main_gpio();
+#endif /* BUTTON_INT_H_ */
+
